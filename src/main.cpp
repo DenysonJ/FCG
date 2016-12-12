@@ -7,12 +7,18 @@
 #include <GL/glut.h>
 #endif
 
-#include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
+#include <vector>
+#include "dSFMT.h"
 
+const int LENGTH_GROUND {500};
 
-GLfloat matriz_ground[4][4] = {{1,2,1,1},{2,2,3,5},{3,3,5,-1},{4,2,3,1}};
+using std::vector;
+
+vector <vector <GLfloat>> matriz_ground;
 GLdouble eyex=5.0, eyey=5.0, eyez=5.0;
 GLfloat rotate_angle =1;
 GLfloat CAMERASPEED = 0.03f;
@@ -21,8 +27,31 @@ GLfloat view_x, view_z;
 
 void setEyePoint(void)
 {
-		eyex=5.0; eyey=5.0; eyez = 5.0; return;
+	eyex = 5.0; eyey = 3.0; eyez = 5.0;
+	return;
 }	
+
+void setMatrixRandom(int lenght_matrix, vector <vector <GLfloat> > & matrix)
+{
+	dsfmt_t dsfmt;
+
+	dsfmt_init_gen_rand(&dsfmt, time(NULL));//initialize the random generator with time(NULL) like seed
+
+	for (int count = 0; count < lenght_matrix; ++count)
+	{
+		vector <GLfloat> temp;
+
+		for (int count2 = 0; count2 < lenght_matrix; ++count2)
+		{
+			//std::cout << count << "\t" << count2 << std::endl;
+			temp.push_back(dsfmt_genrand_close_open(&dsfmt)); //generates a pseudorandom number between [0,1)
+			//std::cout << temp.at(count2) << " "; 
+		}
+		//std::cout << std::endl;
+
+		matrix.push_back(temp);
+	}
+}
 
 
 /*
@@ -44,6 +73,7 @@ void Move_Camera(float speed)
 	// forward positive cameraspeed and backward negative -cameraspeed.
 	eyex  = eyex  + (view_x-eyex) * speed;
 	eyez  = eyez  + (view_z-eyez) * speed;
+	eyey  = matriz_ground[eyex][eyez] + 2;
 	view_x = view_x + (view_x-eyex) * speed;
 	view_z = view_z + (view_z-eyez) * speed;
 }
@@ -61,6 +91,8 @@ void init (void)
 	glClearColor(1.0, 1.0, 1.0, 0.0);
 	glShadeModel(GL_SMOOTH);
 	glEnable( GL_DEPTH_TEST );
+
+	setMatrixRandom(LENGTH_GROUND, matriz_ground);
 }
 void display(void)
 {	
@@ -69,14 +101,7 @@ void display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	glLoadIdentity();
 
-	gluLookAt(eyex, 1, eyez, view_x, 1, view_z, 0.0, 1.0, 0.0);
-
-
-	glPushMatrix();
-
-	glRotatef(rotate_angle, 0, 1, 0);
-
-	glPopMatrix();
+	gluLookAt(eyex, 3, eyez, view_x, 2.5, view_z, 0.0, 1.0, 0.0);
 
 
 	for(float i = -500; i <= 500; i += 5)
@@ -90,17 +115,24 @@ void display(void)
 		glEnd();
 	}
 
+	glPushMatrix();
+
 	glTranslatef(10,1,10);
 
 	glColor4f (0.0, 0.0, 1.0, 0.0);
-	glutSolidTeapot(.75);
+	glutSolidTeapot(0.5);
 
+	glPopMatrix();
 
+	glPushMatrix();
 
-	for(x_matriz=0;x_matriz<3;x_matriz++)
+	glTranslatef(-250,0,-250);
+
+	for(x_matriz=0;x_matriz<LENGTH_GROUND-1;x_matriz++)
 	{
-		for(z_matriz= 0; z_matriz<3; z_matriz++)
+		for(z_matriz= 0; z_matriz<LENGTH_GROUND-1; z_matriz++)
 		{
+			
 			glBegin(GL_LINES);
 				glColor3f(0.0f, 0.0f, 0.0f);
 				glVertex3i(x_matriz, matriz_ground[x_matriz][z_matriz], z_matriz);
@@ -121,10 +153,8 @@ void display(void)
 				glColor3f(0.0f, 0.0f, 0.0f);
 				glVertex3i(x_matriz, matriz_ground[x_matriz][z_matriz+1], z_matriz+1);
 				glVertex3i(x_matriz+1, matriz_ground[x_matriz+1][z_matriz+1], z_matriz+1);
-
-
 			glEnd();
-
+			
 			glBegin(GL_TRIANGLES);
 				glColor3f(1.0f, 0.0f, 0.0f);
 				glVertex3f(x_matriz, matriz_ground[x_matriz][z_matriz], z_matriz);
@@ -135,10 +165,11 @@ void display(void)
 				glVertex3f(x_matriz+1, matriz_ground[x_matriz+1][z_matriz+1], z_matriz+1);
 				glVertex3f(x_matriz+1, matriz_ground[x_matriz+1][z_matriz], z_matriz);
 				glVertex3f(x_matriz, matriz_ground[x_matriz][z_matriz+1], z_matriz+1);
-
 			glEnd();
 		}	
 	}
+
+	glPopMatrix();
 
     glutSwapBuffers();
 }
@@ -167,11 +198,8 @@ void specialkeys( int key, int x, int y )
 void myKeyboard(unsigned char key, int x, int y)
 {	
 	switch(key) {
-	case 'x': eyex=5.0; eyey=0.0; eyez=0.0; break;
-	case 'y': eyex=0.05; eyey=5.0; eyez=0.0; break;
-	case 'z': eyex=0.0; eyey=0.0; eyez=5.0; break;
-	case 'e': glEnable( GL_DEPTH_TEST); break;
-	case 'd': glDisable(GL_DEPTH_TEST); break;
+	case 'q': exit(); break;
+	
 	default:
 		break;
 	}
