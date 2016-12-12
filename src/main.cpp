@@ -18,7 +18,7 @@ const int LENGTH_GROUND {500};
 
 using std::vector;
 
-vector <vector <GLfloat>> matriz_ground;
+vector< vector < GLfloat >> matriz_ground;
 GLdouble eyex=5.0, eyey=5.0, eyez=5.0;
 GLfloat rotate_angle =1;
 GLfloat CAMERASPEED = 0.03f;
@@ -27,7 +27,8 @@ GLfloat view_x, view_z;
 
 void setEyePoint(void)
 {
-	eyex = 5.0; eyey = 3.0; eyez = 5.0;
+	eyex = LENGTH_GROUND/2.0; eyez = LENGTH_GROUND/2.0;
+	eyey = matriz_ground[eyex][eyez] + 2.0;
 	return;
 }	
 
@@ -71,9 +72,24 @@ void CCamera::Move_Camera(float speed)
 void Move_Camera(float speed)
 {
 	// forward positive cameraspeed and backward negative -cameraspeed.
-	eyex  = eyex  + (view_x-eyex) * speed;
-	eyez  = eyez  + (view_z-eyez) * speed;
-	eyey  = matriz_ground[eyex][eyez] + 2;
+	if ((eyex  + (view_x-eyex) * speed) > LENGTH_GROUND)
+		eyex = LENGTH_GROUND - 1;
+	else if ((eyex  + (view_x-eyex) * speed) < 0)
+		eyex = 0;
+	else
+		eyex  = eyex  + (view_x-eyex) * speed;
+
+	if ((eyez  + (view_z-eyez) * speed) > LENGTH_GROUND)
+		eyez = LENGTH_GROUND - 1;
+	else if ((eyez  + (view_z-eyez) * speed) < 0)
+		eyez = 0;
+	else
+		eyez  = eyez  + (view_z-eyez) * speed;
+
+	//std::cout << eyex << " " << eyez;
+
+	eyey  = matriz_ground.at(eyex).at(eyez) + 2;
+
 	view_x = view_x + (view_x-eyex) * speed;
 	view_z = view_z + (view_z-eyez) * speed;
 }
@@ -93,6 +109,7 @@ void init (void)
 	glEnable( GL_DEPTH_TEST );
 
 	setMatrixRandom(LENGTH_GROUND, matriz_ground);
+	setEyePoint();
 }
 void display(void)
 {	
@@ -103,7 +120,7 @@ void display(void)
 
 	gluLookAt(eyex, 3, eyez, view_x, 2.5, view_z, 0.0, 1.0, 0.0);
 
-
+	/*
 	for(float i = -500; i <= 500; i += 5)
 	{
 		glBegin(GL_LINES);
@@ -114,6 +131,7 @@ void display(void)
 			glVertex3f(i, 0, 500);
 		glEnd();
 	}
+	*/
 
 	glPushMatrix();
 
@@ -126,13 +144,11 @@ void display(void)
 
 	glPushMatrix();
 
-	glTranslatef(-250,0,-250);
-
 	for(x_matriz=0;x_matriz<LENGTH_GROUND-1;x_matriz++)
 	{
 		for(z_matriz= 0; z_matriz<LENGTH_GROUND-1; z_matriz++)
 		{
-			
+			/*
 			glBegin(GL_LINES);
 				glColor3f(0.0f, 0.0f, 0.0f);
 				glVertex3i(x_matriz, matriz_ground[x_matriz][z_matriz], z_matriz);
@@ -154,7 +170,8 @@ void display(void)
 				glVertex3i(x_matriz, matriz_ground[x_matriz][z_matriz+1], z_matriz+1);
 				glVertex3i(x_matriz+1, matriz_ground[x_matriz+1][z_matriz+1], z_matriz+1);
 			glEnd();
-			
+			*/
+
 			glBegin(GL_TRIANGLES);
 				glColor3f(1.0f, 0.0f, 0.0f);
 				glVertex3f(x_matriz, matriz_ground[x_matriz][z_matriz], z_matriz);
@@ -198,8 +215,11 @@ void specialkeys( int key, int x, int y )
 void myKeyboard(unsigned char key, int x, int y)
 {	
 	switch(key) {
-	case 'q': exit(); break;
-	
+	case 'q': exit(0); break;
+	case 'a': Rotate_View(-CAMERASPEED); break;
+    case 'd': Rotate_View(CAMERASPEED); break;
+    case 's': Move_Camera(-CAMERASPEED); break;
+    case 'w': Move_Camera(CAMERASPEED); break;
 	default:
 		break;
 	}
@@ -213,7 +233,7 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH );
 	glutInitWindowSize(500, 500);
 	glutInitWindowPosition( 100, 100);
-	glutCreateWindow("Exemplo de Depth Test");
+	glutCreateWindow("Trabalho Trabalho Trabalho");
 
  	init();
 	glutDisplayFunc(display);
